@@ -1,0 +1,3 @@
+The application uses javascript and html.
+Web sockets Interface to connect to IBM Speech to text conversion service.
+I requries credentials from IBM speech to text service.
