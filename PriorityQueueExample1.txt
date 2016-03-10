@@ -1,0 +1,120 @@
+Question: 
+In this problem, there are 22 types of events: ENTER (a student enters the queue) or SERVED.
+A unique token is assigned to any student entering the queue. The queue serves the students based on the following criteria:
+The student having the highest Cumulative Grade Point Average (CGPA) is served first.
+Any students having the same CGPA will be served by name in ascending case-sensitive alphabetical order.
+Any students having the same CGPA and name will be served in ascending token order.
+Given a sequence of nn events, print the names of students who are yet to be served(based on above criteria). If the queue is empty, print EMPTY.
+
+Input Format
+The first line of input contains an integer, nn, denoting the total number of events. Each of the nn subsequent lines will be of the following two forms:
+ENTER name CGPA token - The student to be inserted into the priority queue.
+SERVED - The highest priority student in the queue was served.
+
+Output Format
+Print the names (based on the criteria) of the students who are not served at all after executing all nn events; if every student in the queue was served, then print EMPTY.
+Sample Input
+12
+ENTER John 3.75 50
+ENTER Mark 3.8 24
+ENTER Shafaet 3.7 35
+SERVED
+SERVED
+ENTER Samiha 3.85 36
+SERVED
+ENTER Ashley 3.9 42
+ENTER Maria 3.6 46
+ENTER Anik 3.95 49
+ENTER Dan 3.95 50
+SERVED
+Sample Output
+
+Dan
+Ashley
+Shafaet
+Maria
+
+
+
+
+Solution:
+
+
+import java.io.*;
+import java.util.*;
+import java.text.*;
+import java.math.*;
+import java.util.regex.*;
+
+class Student{
+   private int token;
+   private String fname;
+   private double cgpa;
+   public Student(int id, String fname, double cgpa) {
+      super();
+      this.token = id;
+      this.fname = fname;
+      this.cgpa = cgpa;
+   }
+   public int getToken() {
+      return token;
+   }
+   public String getFname() {
+      return fname;
+   }
+   public double getCgpa() {
+      return cgpa;
+   }
+}
+
+public class Solution {
+
+    public static void main(String[] args) {
+      Scanner in = new Scanner(System.in);
+      int totalEvents = Integer.parseInt(in.nextLine());
+        PriorityQueue pq = new PriorityQueue(new Comparator(){
+                public int compare(Object o1, Object o2) {
+                    Student s1 = (Student)o1;
+                    Student s2 = (Student)o2;
+                    if(s1.getCgpa()!= s2.getCgpa()){
+						// MaxHeap
+                        return new Double(s2.getCgpa()).compareTo(s1.getCgpa());	
+                    }else{
+                            if(!s1.getFname().equalsIgnoreCase(s2.getFname())){
+                                // MinHeap
+								return s1.getFname().compareTo(s2.getFname());
+                            }else{
+								// MinHeap
+                                return new Integer(s1.getToken()).compareTo(s2.getToken());
+                            }
+                    }
+                    
+                }
+        });
+      while(totalEvents>0){
+         String event = in.next();
+         if(event.equals("ENTER")){
+             String name = in.next();
+             double gpa = in.nextDouble();
+             int id = in.nextInt();
+             pq.offer(new Student(id,name,gpa));
+             
+             
+         }else{
+             if(!pq.isEmpty()){
+                 pq.poll();
+                 //pq.remove();
+             }
+         }   
+         totalEvents--;
+      }
+      if(pq.isEmpty()){
+          System.out.println("EMPTY");
+      }else{
+          while(!pq.isEmpty()){
+              Student s = (Student)pq.poll();
+              System.out.println(s.getFname());
+          }
+      }  
+    }
+}
