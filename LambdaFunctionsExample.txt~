@@ -1,5 +1,3 @@
-Question:
-
 Write the following methods that return a lambda expression performing a specified action:
 
 performOperation checkEvenOdd(): The lambda expression must return 00 if a number is even or 11 if it is odd.
@@ -36,7 +34,7 @@ COMPOSITE
 
 
 
-Program:
+
 
 import java.io.*;
 import java.util.*;
