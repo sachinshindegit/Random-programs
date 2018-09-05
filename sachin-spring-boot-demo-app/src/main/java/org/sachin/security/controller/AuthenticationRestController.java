@@ -1,19 +1,22 @@
 package org.sachin.security.controller;
 
 import java.util.Collections;
-import java.util.Map;
 import java.util.Objects;
+
 import javax.servlet.http.HttpServletRequest;
 
+import org.sachin.model.security.Customer;
 import org.sachin.security.JwtAuthenticationRequest;
 import org.sachin.security.JwtTokenUtil;
 import org.sachin.security.JwtUser;
+import org.sachin.security.service.CustomerService;
 import org.sachin.security.service.JwtAuthenticationResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
@@ -24,17 +27,25 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class AuthenticationRestController {
-
+	
+	@Autowired
+    JdbcTemplate jdbcTemplate;
+	
+	@Autowired
+	CustomerService customerService;
+	
     @Value("${jwt.header}")
     private String tokenHeader;
 
     @Autowired
     private AuthenticationManager authenticationManager;
-
+    
+    
     @Autowired
     private JwtTokenUtil jwtTokenUtil;
 
@@ -43,11 +54,31 @@ public class AuthenticationRestController {
     private UserDetailsService userDetailsService;
     
     @RequestMapping(value = "/check", method = { RequestMethod.GET })
-    public Map<String, String> check() {
-    	
-        return Collections.singletonMap("health", "ok");
+    public ResponseEntity check() {
+    	return new ResponseEntity(Collections.singletonMap("health", "ok"), HttpStatus.OK);
     }
     
+    @RequestMapping(value = "/getoken", method = { RequestMethod.POST})
+    public ResponseEntity adminLogin(@RequestParam String username, @RequestParam String password){
+    	if(username.length()==0 || password.length()==0){
+    		return new ResponseEntity<String>("Invalid input for username or password", HttpStatus.BAD_REQUEST);
+    	}
+    	
+    	Customer result = null;
+    	try {
+			result = customerService.validateCredentials(username, password);			
+		} catch (BadCredentialsException e) {
+            throw new AuthenticationException("Bad credentials!", e);
+        }
+    	
+    	if(result!=null){
+    		final String token = jwtTokenUtil.genToken(result.getUsername(),result.getRole().toString());
+        	return ResponseEntity.ok(new JwtAuthenticationResponse(token));
+    	}else{
+    		return new ResponseEntity<String>("Authentication failed", HttpStatus.BAD_REQUEST);
+    	}
+    	
+	}
 
     @RequestMapping(value = "${jwt.route.authentication.path}", method = RequestMethod.POST)
     public ResponseEntity<?> createAuthenticationToken(@RequestBody JwtAuthenticationRequest authenticationRequest) throws AuthenticationException {

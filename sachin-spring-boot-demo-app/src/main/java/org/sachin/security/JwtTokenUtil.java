@@ -48,13 +48,6 @@ public class JwtTokenUtil implements Serializable {
         return claimsResolver.apply(claims);
     }
 
-    private Claims getAllClaimsFromToken(String token) {
-        return Jwts.parser()
-            .setSigningKey(secret)
-            .parseClaimsJws(token)
-            .getBody();
-    }
-
     private Boolean isTokenExpired(String token) {
         final Date expiration = getExpirationDateFromToken(token);
         return expiration.before(clock.now());
@@ -100,7 +93,7 @@ public class JwtTokenUtil implements Serializable {
         final Claims claims = getAllClaimsFromToken(token);
         claims.setIssuedAt(createdDate);
         claims.setExpiration(expirationDate);
-
+        
         return Jwts.builder()
             .setClaims(claims)
             .signWith(SignatureAlgorithm.HS512, secret)
@@ -119,7 +112,37 @@ public class JwtTokenUtil implements Serializable {
         );
     }
 
+    
+    
+    
+    
+    // Sachin's new and related methods
+    
+    public String genToken(String username, String role){
+    	final Date createdDate = clock.now();
+        final Date expirationDate = calculateExpirationDate(createdDate);
+        Map<String, Object> claims = new HashMap<>();
+        
+        claims.put("role", role);
+        
+        return Jwts.builder()
+            .setClaims(claims)
+            .setSubject(username)
+            .setIssuedAt(createdDate)
+            .setExpiration(expirationDate)
+            .signWith(SignatureAlgorithm.HS512, secret)
+            .compact();
+    	
+    }
     private Date calculateExpirationDate(Date createdDate) {
         return new Date(createdDate.getTime() + expiration * 1000);
     }
+    
+    public Claims getAllClaimsFromToken(String token) {
+        return Jwts.parser()
+            .setSigningKey(secret)
+            .parseClaimsJws(token)
+            .getBody();
+    }
+    
 }
