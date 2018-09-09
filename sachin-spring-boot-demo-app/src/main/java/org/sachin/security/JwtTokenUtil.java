@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
+import org.sachin.model.security.CustomerRole;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
@@ -52,71 +53,11 @@ public class JwtTokenUtil implements Serializable {
         final Date expiration = getExpirationDateFromToken(token);
         return expiration.before(clock.now());
     }
-
-    private Boolean isCreatedBeforeLastPasswordReset(Date created, Date lastPasswordReset) {
-        return (lastPasswordReset != null && created.before(lastPasswordReset));
-    }
-
-    private Boolean ignoreTokenExpiration(String token) {
-        // here you specify tokens, for that the expiration is ignored
-        return false;
-    }
-
-    public String generateToken(UserDetails userDetails) {
-        Map<String, Object> claims = new HashMap<>();
-        return doGenerateToken(claims, userDetails.getUsername());
-    }
-
-    private String doGenerateToken(Map<String, Object> claims, String subject) {
-        final Date createdDate = clock.now();
-        final Date expirationDate = calculateExpirationDate(createdDate);
-
-        return Jwts.builder()
-            .setClaims(claims)
-            .setSubject(subject)
-            .setIssuedAt(createdDate)
-            .setExpiration(expirationDate)
-            .signWith(SignatureAlgorithm.HS512, secret)
-            .compact();
-    }
-
-    public Boolean canTokenBeRefreshed(String token, Date lastPasswordReset) {
-        final Date created = getIssuedAtDateFromToken(token);
-        return !isCreatedBeforeLastPasswordReset(created, lastPasswordReset)
-            && (!isTokenExpired(token) || ignoreTokenExpiration(token));
-    }
-
-    public String refreshToken(String token) {
-        final Date createdDate = clock.now();
-        final Date expirationDate = calculateExpirationDate(createdDate);
-
-        final Claims claims = getAllClaimsFromToken(token);
-        claims.setIssuedAt(createdDate);
-        claims.setExpiration(expirationDate);
-        
-        return Jwts.builder()
-            .setClaims(claims)
-            .signWith(SignatureAlgorithm.HS512, secret)
-            .compact();
-    }
-
-    public Boolean validateToken(String token, UserDetails userDetails) {
-        JwtUser user = (JwtUser) userDetails;
-        final String username = getUsernameFromToken(token);
-        final Date created = getIssuedAtDateFromToken(token);
-        //final Date expiration = getExpirationDateFromToken(token);
-        return (
-            username.equals(user.getUsername())
-                && !isTokenExpired(token)
-                && !isCreatedBeforeLastPasswordReset(created, user.getLastPasswordResetDate())
-        );
-    }
-
     
-    
-    
-    
-    // Sachin's new and related methods
+    public Boolean validateToken(String token) {
+    	final Date created = getIssuedAtDateFromToken(token);
+       return !isTokenExpired(token);
+    }
     
     public String genToken(String username, String role){
     	final Date createdDate = clock.now();
@@ -144,5 +85,11 @@ public class JwtTokenUtil implements Serializable {
             .parseClaimsJws(token)
             .getBody();
     }
+    
+    public String getRoleFromToken(String token){
+    	Claims claims = getAllClaimsFromToken(token);
+    	return (String)claims.get("role");
+    }
+    
     
 }
